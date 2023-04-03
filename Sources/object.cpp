@@ -171,7 +171,7 @@ void camera::draw(scene scene)
                         for (unsigned int i_object = 0; i_object < scene.getObjects().size(); i_object++)
                         {
 
-                            if (i_object != objectID)
+                            if ((int)i_object != objectID)
                             {
                                 if (scene.getObjects()[i_object]->intersect(lightRay, &intersectionLightPoint))
                                 {
@@ -265,4 +265,21 @@ double sphere::getRadius() const
 void sphere::setRadius(const double &r)
 {
     m_radius = r;
+}
+
+/// Cube class
+
+// double cube::getEdge() const
+// {
+//     return m_edge;
+// }
+// void cube::setEdge(const double &e)
+// {
+//     m_edge = e;
+// }
+
+/// Plan Class
+Vector3 plan::getNormal()
+{
+    return m_normal;
 }

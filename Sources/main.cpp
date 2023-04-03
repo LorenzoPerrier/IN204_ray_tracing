@@ -70,16 +70,21 @@ int main(int argc, char *argv[])
         }
         else if (objectType == "plan")
         {
-            std::vector<double> cartesian = {
-                objectNode.attribute("cartesian_1").as_double(),
-                objectNode.attribute("cartesian_2").as_double(),
-                objectNode.attribute("cartesian_3").as_double(),
-                objectNode.attribute("cartesian_4").as_double()};
+            Vector3 normal = {
+                objectNode.attribute("n_x").as_double(),
+                objectNode.attribute("n_y").as_double(),
+                objectNode.attribute("n_z").as_double()};
+            Vector3 position = {
+                objectNode.attribute("pos_x").as_double(),
+                objectNode.attribute("pos_y").as_double(),
+                objectNode.attribute("pos_z").as_double()};
+
             Vector3 color(objectNode.attribute("color_r").as_double(),
                           objectNode.attribute("color_g").as_double(),
                           objectNode.attribute("color_b").as_double());
             double reflection = objectNode.attribute("reflection").as_double();
-            plan *p = new plan(cartesian, color);
+            normal.normalize();
+            plan *p = new plan(normal, position, color);
             p->setReflection(reflection);
             myScene.addObject(p);
         }
@@ -101,7 +106,7 @@ int main(int argc, char *argv[])
         // light *newLight = new light(position, color);
         myScene.addLight(light(position, color));
     }
-    std::cout << "On a créé la Scène" << std::endl;
+    std::cout << "Scene created : " << std::endl;
     cam.draw(myScene);
 
     return 0;

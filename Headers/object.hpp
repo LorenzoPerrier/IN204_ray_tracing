@@ -132,48 +132,62 @@ class plan : public object
 {
 
 private:
-    std::vector<double> m_cartesien;
+    Vector3 m_normal;
 
 public:
-    plan();
-
+    plan() : object() {}
     plan(const double &x, const double &y, const double &z) : object(x, y, z) {}
-    plan(std::vector<double> cartesien, Vector3 Color) : object(Vector3(0., 0., 0.), Color), m_cartesien(cartesien) {}
+    plan(Vector3 normal, Vector3 position, Vector3 Color) : object(position, Color), m_normal(normal) {}
+    Vector3 getNormal();
+
     virtual bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
 
         double t;
-
-        Vector3 Vdir = ray.direction;
-        Vector3 normal(m_cartesien[0], m_cartesien[1], m_cartesien[2]);
-        if (normal.dot(Vdir) == 0)
+        Vector3 p0 = this->getPosition();
+        Vector3 l = ray.direction;
+        Vector3 l0 = ray.origin;
+        l.normalize();
+        double product = l.dot(m_normal);
+        if (fabs(product) < pow(10, -6))
         {
             return false;
         }
-        else
-        {
-            // supposons que la droite n'est ni confondu avec le plan ni parrallèle
-            // le confondu avec le plan est encore à implémenter
-            t = -(normal.dot(ray.origin) + m_cartesien[3]) / (normal.dot(ray.direction)); // à revoir
+        t = (p0 - l0).dot(m_normal) / product;
+        auto result = ray.origin + t * ray.direction;
+        *intersectionPoint = result;
 
-            if (t < 0)
-            {
-                return false;
-            }
-
-            *intersectionPoint = ray.origin + t * ray.direction; // à revoir
-            //*I=(d.GetPoint(t));
-            /*if(t<0){
-                return false;
-            }*/
-            return true;
-        }
+        return true;
     }
+
     Vector3 getSurfaceNormal(Vector3 const PointSurface) override
     {
-        Vector3 normal(m_cartesien[0], m_cartesien[1], m_cartesien[2]);
-        return normal;
+        return m_normal;
     }
 };
+
+// class cube : public object
+// {
+// private:
+//     double m_edge;
+
+// public:
+//     cube() : object() {}
+//     cube(const double &x, const double &y, const double &z) : object(x, y, z) {}
+//     cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) {}
+//     cube(Vector3 pos, double e) : object(pos), m_edge(e) {}
+//     cube(Vector3 pos, Vector3 col, double e) : object(pos, col), m_edge(e) {}
+
+//     double getEdge() const;
+//     void setEdge(const double &r);
+
+//     bool intersect(Ray ray, Vector3 *intersectionPoint) override
+//     {
+//     }
+
+//     Vector3 getSurfaceNormal(Vector3 surfacePoint) override
+//     {
+//     }
+// };
 
 #endif
