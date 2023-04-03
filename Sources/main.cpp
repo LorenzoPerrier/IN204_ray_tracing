@@ -1,3 +1,5 @@
+#include <iostream>
+#include "../Headers/pugixml.hpp"
 #include "../Headers/object.hpp"
 #include "../Headers/scene.hpp"
 #include <cstdio>
@@ -6,51 +8,101 @@
 
 using namespace std;
 
-int main_2()
+int main(int argc, char *argv[])
 {
+    // Vérifier que le fichier XML est fourni en argument
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << argv[0] << " scene.xml" << std::endl;
+        return 1;
+    }
 
-    // Scene setup
+    // Charger le fichier XML
+    pugi::xml_document doc;
+    pugi::xml_parse_result result = doc.load_file(argv[1]);
+    if (!result)
+    {
+        std::cerr << "Erreur de chargement du fichier XML : " << result.description() << std::endl;
+        return 1;
+    }
 
-    Vector3 pos = {0., -1., 0.};
-    Vector3 camera_dir = {0., 1., 0.};
-    Vector3 camera_orth = {1., 0., 0.};
-    int width = 960;
-    int height = 720;
-    double resolution = 0.0035;
-    double screen_distance = 1.4;
-    camera cam(pos, camera_dir, camera_orth, width, height, resolution, screen_distance);
+    // Créer la scène
+    scene myScene;
 
-    scene scene1;
+    // Récupérer les paramètres de la caméra
+    pugi::xml_node cameraNode = doc.child("scene").child("camera");
+    Vector3 pos(cameraNode.attribute("pos_x").as_double(),
+                cameraNode.attribute("pos_y").as_double(),
+                cameraNode.attribute("pos_z").as_double());
+    Vector3 dir(cameraNode.attribute("dir_x").as_double(),
+                cameraNode.attribute("dir_y").as_double(),
+                cameraNode.attribute("dir_z").as_double());
+    Vector3 orth(cameraNode.attribute("orth_x").as_double(),
+                 cameraNode.attribute("orth_y").as_double(),
+                 cameraNode.attribute("orth_z").as_double());
+    int width = cameraNode.attribute("width").as_int();
+    int height = cameraNode.attribute("height").as_int();
+    double resolution = cameraNode.attribute("resolution").as_double();
+    double screen_distance = cameraNode.attribute("screen_distance").as_double();
+    camera cam(pos, dir, orth, width, height, resolution, screen_distance);
 
-    sphere sphere1(0., 3., -1., 1.25);
-    sphere1.setColor(255., 0., 0.);
-    sphere1.setReflection(0.5);
+    // Récupérer les objets de la scène
+    pugi::xml_node objectsNode = doc.child("scene").child("objects");
+    for (pugi::xml_node objectNode : objectsNode.children())
+    {
+        std::string objectType = objectNode.name();
+        if (objectType == "sphere")
+        {
+            Vector3 center(objectNode.attribute("pos_x").as_double(),
+                           objectNode.attribute("pos_y").as_double(),
+                           objectNode.attribute("pos_z").as_double());
+            double radius = objectNode.attribute("radius").as_double();
+            // std::cout<<"Objet "<<" x "<<center.x<<" y "<<center.y<<" z "<<center.z<<std::endl;
 
-    sphere sphere2(-1., 3., 1., 1.25);
-    sphere2.setColor(0., 255., 0.);
-    sphere2.setReflection(0.5);
+            double reflection = objectNode.attribute("reflection").as_double();
+            // sphere newSphere(center, radius);
+            sphere *newSphere = new sphere(center, radius);
+            newSphere->setColor(objectNode.attribute("color_r").as_double(),
+                                objectNode.attribute("color_g").as_double(),
+                                objectNode.attribute("color_b").as_double());
+            newSphere->setReflection(reflection);
+            myScene.addObject(newSphere);
+        }
+        else if (objectType == "plan")
+        {
+            std::vector<double> cartesian = {
+                objectNode.attribute("cartesian_1").as_double(),
+                objectNode.attribute("cartesian_2").as_double(),
+                objectNode.attribute("cartesian_3").as_double(),
+                objectNode.attribute("cartesian_4").as_double()};
+            Vector3 color(objectNode.attribute("color_r").as_double(),
+                          objectNode.attribute("color_g").as_double(),
+                          objectNode.attribute("color_b").as_double());
+            double reflection = objectNode.attribute("reflection").as_double();
+            plan *p = new plan(cartesian, color);
+            p->setReflection(reflection);
+            myScene.addObject(p);
+        }
+        else
+        {
+            std::cerr << "Unknown object type: " << objectType << std::endl;
+        }
+    }
 
-    sphere sphere3(1., 3., 1., 1.25);
-    sphere3.setColor(0., 0., 255.);
-    sphere3.setReflection(0.5);
-    scene1.addObject(&sphere3);
-    scene1.addObject(&sphere1);
-    scene1.addObject(&sphere2);
-
-    std::vector<double> cartesien1 = {0., -1, 0, 3.};
-
-    Vector3 Color(255., 255., 255.);
-    plan plan1(cartesien1, Color);
-    plan1.setColor(255., 255., 255.);
-    plan1.setReflection(0.5);
-    // scene1.addObject(&plan1);
-
-    light pointLight({3., 0., 3.}, {1., 1., 1.});
-    scene1.addLight(pointLight);
-    light pointLight2({-3., 0., 3.}, {1., 1., 1.});
-    scene1.addLight(pointLight2);
-
-    cam.draw(scene1);
+    // Loop over lights
+    for (pugi::xml_node lightNode : doc.child("scene").child("lights"))
+    {
+        Vector3 position(lightNode.attribute("pos_x").as_double(),
+                         lightNode.attribute("pos_y").as_double(),
+                         lightNode.attribute("pos_z").as_double());
+        Vector3 color(lightNode.attribute("color_r").as_double(),
+                      lightNode.attribute("color_g").as_double(),
+                      lightNode.attribute("color_b").as_double());
+        // light *newLight = new light(position, color);
+        myScene.addLight(light(position, color));
+    }
+    std::cout << "On a créé la Scène" << std::endl;
+    cam.draw(myScene);
 
     return 0;
 }
