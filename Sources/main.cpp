@@ -103,8 +103,11 @@ int main(int argc, char *argv[])
         Vector3 color(lightNode.attribute("color_r").as_double(),
                       lightNode.attribute("color_g").as_double(),
                       lightNode.attribute("color_b").as_double());
+        double intensity(lightNode.attribute("intensity").as_double());
         // light *newLight = new light(position, color);
-        myScene.addLight(light(position, color));
+        light l(position, color);
+        l.setIntensity(intensity);
+        myScene.addLight(l);
     }
     std::cout << "Scene created : " << std::endl;
     cam.draw(myScene);
