@@ -11,8 +11,8 @@ class object
 {
 private:
     Vector3 m_position;
-    Vector3 m_rotation;
-    Vector3 m_color; // créer une classe Material
+    Vector3 m_rotation; // not taken in account for the moment
+    Vector3 m_color;    // créer une classe Material
     double m_reflection;
 
 public:
@@ -49,7 +49,7 @@ private:
     double m_screen_distance;   // distance à l'écran
     Vector3 m_camera_direction; // vecteur qui dit ou pointe la caméra
     Vector3 m_camera_orth;      // vecteur orthogonal à la direction pointée (donne info sur l inclinaison de la camera)
-
+    int m_reflection_level;     // number of reflection levels
 public:
     camera() : object() {}
     camera(Vector3 origin, Vector3 dir, Vector3 orth, const int &width, const int &height, const double &res, const double &dist) : object(origin), m_camera_direction(dir), m_camera_orth(orth),
@@ -67,8 +67,10 @@ public:
     void setCameraDirection(const Vector3 &camera_direction);
     const Vector3 &getCameraOrtho() const;
     void setCameraOrtho(const Vector3 &camera_direction);
+    int getReflectionLevel() const;
+    void setReflectionLevel(const int reflection_level);
 
-    void draw(scene scene);
+    void draw(scene scene, int reflection_level);
 };
 
 class light : public object
@@ -102,23 +104,42 @@ public:
     bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
 
-        Vector3 oc = ray.origin - this->getPosition();
-        double a = ray.direction.norm() * ray.direction.norm();
-        double b = 2. * oc.dot(ray.direction);
-        double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
-        double discriminant = b * b - 4. * a * c;
-        if (discriminant < 0)
-        {
-            return false;
-        }
-        double t = (-b - sqrt(discriminant)) / (2. * a);
-        if (t < 0)
-        {
-            return false;
-        }
+        Vector3 oc = this->getPosition() - ray.origin;
+        double t = oc.dot(ray.direction);
+        Vector3 p = ray.origin + t * ray.direction;
 
-        *intersectionPoint = ray.origin + t * ray.direction;
-        return true;
+        if ((p - this->getPosition()).norm() <= m_radius)
+        {
+
+            double length = (this->getPosition() - p).norm();
+            double x = sqrt(pow(m_radius, 2) - pow(length, 2));
+            double t1 = t - x;
+            *intersectionPoint = ray.origin + t1 * ray.direction;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        /// Hard shadows :
+
+        // Vector3 oc = ray.origin - this->getPosition();
+        // double a = ray.direction.norm() * ray.direction.norm();
+        // double b = 2. * oc.dot(ray.direction);
+        // double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
+        // double discriminant = b * b - 4. * a * c;
+        // if (discriminant < 0)
+        // {
+        //     return false;
+        // }
+        // double t = (-b - sqrt(discriminant)) / (2. * a);
+        // if (t < 0)
+        // {
+        //     return false;
+        // }
+
+        // *intersectionPoint = ray.origin + t * ray.direction;
+        // return true;
     }
 
     Vector3 getSurfaceNormal(Vector3 surfacePoint) override
@@ -166,28 +187,63 @@ public:
     }
 };
 
-// class cube : public object
-// {
-// private:
-//     double m_edge;
+class cube : public object
+{
+private:
+    double m_edge; // accessible variable
+    std::vector<plan> m_planes;
 
-// public:
-//     cube() : object() {}
-//     cube(const double &x, const double &y, const double &z) : object(x, y, z) {}
-//     cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) {}
-//     cube(Vector3 pos, double e) : object(pos), m_edge(e) {}
-//     cube(Vector3 pos, Vector3 col, double e) : object(pos, col), m_edge(e) {}
+    bool isInsideSquare(Vector3 point, plan plane, double edge);
 
-//     double getEdge() const;
-//     void setEdge(const double &r);
+public:
+    double getEdge() const;
+    void setEdge(const double &r);
+    void createFaces(const double edge);
 
-//     bool intersect(Ray ray, Vector3 *intersectionPoint) override
-//     {
-//     }
+    cube() : object() {}
+    cube(const double &x, const double &y, const double &z) : object(x, y, z) {}
+    cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) { createFaces(e); }
+    cube(Vector3 pos, double e) : object(pos), m_edge(e) {}
+    cube(Vector3 pos, Vector3 col, double e) : object(pos, col), m_edge(e)
+    {
+        createFaces(e);
+    }
 
-//     Vector3 getSurfaceNormal(Vector3 surfacePoint) override
-//     {
-//     }
-// };
+    bool intersect(Ray ray, Vector3 *intersectionPoint) override
+    {
+        bool test = false;
+
+        for (int k = 0; k < 6; k++)
+        {
+
+            if (m_planes[k].getNormal().dot(ray.direction) < 0)
+            {
+                Vector3 point;
+                m_planes[k].intersect(ray, &point);
+
+                if (isInsideSquare(point, m_planes[k], m_edge))
+                {
+                    test = true;
+                    break;
+                }
+            }
+        }
+
+        return test;
+    }
+    Vector3 getSurfaceNormal(Vector3 surfacePoint) override
+    {
+        for (int k = 0; k < 6; k++)
+        {
+
+            if (isInsideSquare(surfacePoint, m_planes[k], m_edge))
+            {
+                return m_planes[k].getNormal();
+            }
+        }
+
+        return m_planes[0].getNormal(); // shouldnt happen
+    }
+};
 
 #endif
