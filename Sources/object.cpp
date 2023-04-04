@@ -95,8 +95,16 @@ void camera::setCameraOrtho(const Vector3 &camera_direction)
 {
     m_camera_orth = camera_direction;
 }
+int camera::getReflectionLevel() const
+{
+    return m_reflection_level;
+}
+void camera::setReflectionLevel(const int reflection_level)
+{
+    m_reflection_level = reflection_level;
+}
 
-void camera::draw(scene scene)
+void camera::draw(scene scene, int reflection_level)
 {
 
     /// Affichage des objets dans la console
@@ -133,7 +141,7 @@ void camera::draw(scene scene)
             // Ray
             Ray cameraRay;
             cameraRay.direction = (M - this->getPosition());
-            cameraRay.direction.normalize(); // peut-être inutile
+            cameraRay.direction.normalize();
             cameraRay.origin = M;
             // Hit objects
             Vector3 intersectionPoint;
@@ -149,8 +157,8 @@ void camera::draw(scene scene)
                 {
 
                     if (scene.getObjects()[i_object]->intersect(cameraRay, &intersectionPoint))
-                    {                                                                      // std::cout<<"Les coordonnées du point"<<intersectionPoint.x<<std::endl;
-                        if (((intersectionPoint - cameraRay.origin).norm() < distanceHit)) //& (((intersectionPoint - cameraRay.origin).dot(m_camera_direction) > 0)))
+                    {
+                        if (((intersectionPoint - cameraRay.origin).norm() < distanceHit))
                         {
                             objectID = i_object;
                             distanceHit = (intersectionPoint - cameraRay.origin).norm();
@@ -212,7 +220,7 @@ void camera::draw(scene scene)
                     level++;
                 }
 
-            } while ((coef > 0.0f) && (level < 10) && objectID != -1);
+            } while ((coef > 0.0f) && (level < reflection_level) && objectID != -1);
             char color3[3];
             if (color.x > 255)
             {
@@ -267,19 +275,67 @@ void sphere::setRadius(const double &r)
     m_radius = r;
 }
 
-/// Cube class
-
-// double cube::getEdge() const
-// {
-//     return m_edge;
-// }
-// void cube::setEdge(const double &e)
-// {
-//     m_edge = e;
-// }
-
 /// Plan Class
+
 Vector3 plan::getNormal()
 {
     return m_normal;
+}
+
+/// Cube class
+
+double cube::getEdge() const
+{
+    return m_edge;
+}
+void cube::setEdge(const double &e)
+{
+    m_edge = e;
+}
+
+void cube::createFaces(const double edge)
+{
+    m_planes.clear();
+    Vector3 up(0, 0, 1);
+    Vector3 down(0, 0, -1);
+    Vector3 left(-1, 0, 0);
+    Vector3 right(1, 0, 0);
+    Vector3 forward(0, 1, 0);
+    Vector3 backward(0, -1, 0);
+
+    m_planes.push_back(plan(up, this->getPosition() + up * edge * 0.5, this->getColor()));
+    m_planes.push_back(plan(down, this->getPosition() + down * edge * 0.5, this->getColor()));
+    m_planes.push_back(plan(left, this->getPosition() + left * edge * 0.5, this->getColor()));
+    m_planes.push_back(plan(right, this->getPosition() + right * edge * 0.5, this->getColor()));
+    m_planes.push_back(plan(forward, this->getPosition() + forward * edge * 0.5, this->getColor()));
+    m_planes.push_back(plan(backward, this->getPosition() + backward * edge * 0.5, this->getColor()));
+}
+
+bool cube::isInsideSquare(Vector3 point, plan plane, double edge)
+{
+
+    Vector3 center = plane.getPosition();
+    Vector3 normal = plane.getNormal();
+
+    // Generator vectors of face
+    Vector3 up(0, 0, 1);
+    Vector3 orth = normal.cross(up);
+
+    Vector3 topLeftCorner = center + up * edge * 0.5 + orth * edge * 0.5;
+    Vector3 topRightCorner = center + up * edge * 0.5 - orth * edge * 0.5;
+    Vector3 botLeftCorner = center - up * edge * 0.5 + orth * edge * 0.5;
+    Vector3 botRightCorner = center - up * edge * 0.5 - orth * edge * 0.5;
+
+    Vector3 centerPoint = point - center;
+
+    double a = (topLeftCorner - point).dot(centerPoint);
+    double b = (topRightCorner - point).dot(centerPoint);
+    double c = (botLeftCorner - point).dot(centerPoint);
+    double d = (botRightCorner - point).dot(centerPoint);
+
+    if ((a < 0) & (b < 0) & (c < 0) & (d < 0))
+    {
+        return false;
+    }
+    return true;
 }
