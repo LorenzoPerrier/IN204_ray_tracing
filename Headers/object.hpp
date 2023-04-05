@@ -157,9 +157,39 @@ private:
     Vector3 m_normal;
 
 public:
+    void createObject() override
+    {
+
+        // Rotation matrix
+        Matrix R_x;
+        Matrix R_y;
+        Matrix R_z;
+
+        double x_angle = this->getRotation().x;
+        R_x.row1 = Vector3(1, 0, 0);
+        R_x.row2 = Vector3(0, cos(x_angle), -sin(x_angle));
+        R_x.row3 = Vector3(0, sin(x_angle), cos(x_angle));
+
+        double y_angle = this->getRotation().y;
+        R_y.row1 = Vector3(cos(y_angle), 0, sin(y_angle));
+        R_y.row2 = Vector3(0, 1, 0);
+        R_y.row3 = Vector3(-sin(y_angle), 0, cos(y_angle));
+
+        double z_angle = this->getRotation().z;
+        R_z.row1 = Vector3(cos(z_angle), -sin(z_angle), 0);
+        R_z.row2 = Vector3(sin(z_angle), cos(z_angle), 0);
+        R_z.row3 = Vector3(0, 0, 1);
+
+        m_normal = R_x * (R_y * (R_z * m_normal));
+        // m_normal.printVector();
+    }
+
     plan() : object() {}
-    plan(const double &x, const double &y, const double &z) : object(x, y, z) {}
-    plan(Vector3 normal, Vector3 position, Vector3 Color) : object(position, Color), m_normal(normal) {}
+    plan(const double &x, const double &y, const double &z) : object(x, y, z) { createObject(); }
+    plan(Vector3 normal, Vector3 position, Vector3 Color) : object(position, Color), m_normal(normal)
+    {
+        createObject();
+    }
     Vector3 getNormal();
 
     virtual bool intersect(Ray ray, Vector3 *intersectionPoint) override
@@ -271,7 +301,7 @@ public:
     cube() : object() {}
     cube(const double &x, const double &y, const double &z) : object(x, y, z) {}
     cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) { createObject(); }
-    cube(Vector3 pos, double e) : object(pos), m_edge(e) {}
+    cube(Vector3 pos, double e) : object(pos), m_edge(e) { createObject(); }
     cube(Vector3 pos, Vector3 col, double e) : object(pos, col), m_edge(e)
     {
         createObject();

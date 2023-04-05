@@ -74,6 +74,9 @@ int main(int argc, char *argv[])
                 objectNode.attribute("n_x").as_double(),
                 objectNode.attribute("n_y").as_double(),
                 objectNode.attribute("n_z").as_double()};
+            Vector3 rotation(objectNode.attribute("rot_x").as_double(),
+                             objectNode.attribute("rot_y").as_double(),
+                             objectNode.attribute("rot_z").as_double());
             Vector3 position = {
                 objectNode.attribute("pos_x").as_double(),
                 objectNode.attribute("pos_y").as_double(),
@@ -86,6 +89,7 @@ int main(int argc, char *argv[])
             normal.normalize();
             plan *p = new plan(normal, position, color);
             p->setReflection(reflection);
+            p->setRotation(rotation);
             myScene.addObject(p);
         }
 
