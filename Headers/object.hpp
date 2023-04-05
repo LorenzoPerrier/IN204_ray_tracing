@@ -212,19 +212,22 @@ public:
     bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
         bool test = false;
-
         for (int k = 0; k < 6; k++)
         {
 
             if (m_planes[k].getNormal().dot(ray.direction) < 0)
             {
-                Vector3 point;
-                m_planes[k].intersect(ray, &point);
 
-                if (isInsideSquare(point, m_planes[k], m_edge))
+                Vector3 point;
+                if (m_planes[k].intersect(ray, &point))
                 {
-                    test = true;
-                    break;
+
+                    if (isInsideSquare(point, m_planes[k], m_edge))
+                    {
+                        test = true;
+                        *intersectionPoint = point;
+                        break;
+                    }
                 }
             }
         }

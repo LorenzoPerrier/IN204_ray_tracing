@@ -298,10 +298,15 @@ void cube::createFaces(const double edge)
     m_planes.clear();
     Vector3 up(0, 0, 1);
     Vector3 down(0, 0, -1);
-    Vector3 left(-1, 0, 0);
-    Vector3 right(1, 0, 0);
-    Vector3 forward(0, 1, 0);
-    Vector3 backward(0, -1, 0);
+    Vector3 left(-1, 1, 0);
+    Vector3 right(1, 1, 0);
+    Vector3 forward(1, -1, 0);
+    Vector3 backward(-1, -1, 0);
+
+    left.normalize();
+    right.normalize();
+    forward.normalize();
+    backward.normalize();
 
     m_planes.push_back(plan(up, this->getPosition() + up * edge * 0.5, this->getColor()));
     m_planes.push_back(plan(down, this->getPosition() + down * edge * 0.5, this->getColor()));
@@ -326,14 +331,17 @@ bool cube::isInsideSquare(Vector3 point, plan plane, double edge)
     Vector3 botLeftCorner = center - up * edge * 0.5 + orth * edge * 0.5;
     Vector3 botRightCorner = center - up * edge * 0.5 - orth * edge * 0.5;
 
-    Vector3 centerPoint = point - center;
+    Vector3 AB = topRightCorner - topLeftCorner;
+    Vector3 BC = botRightCorner - topRightCorner;
+    Vector3 CD = botLeftCorner - botRightCorner;
+    Vector3 DA = topLeftCorner - botLeftCorner;
 
-    double a = (topLeftCorner - point).dot(centerPoint);
-    double b = (topRightCorner - point).dot(centerPoint);
-    double c = (botLeftCorner - point).dot(centerPoint);
-    double d = (botRightCorner - point).dot(centerPoint);
+    Vector3 R1 = AB.cross(point - topLeftCorner);
+    Vector3 R2 = BC.cross(point - topRightCorner);
+    Vector3 R3 = CD.cross(point - botRightCorner);
+    Vector3 R4 = DA.cross(point - botLeftCorner);
 
-    if ((a < 0) & (b < 0) & (c < 0) & (d < 0))
+    if (fabs(R1.norm() + R2.norm() + R3.norm() + R4.norm() - (R1 + R2 + R3 + R4).norm()) > pow(10, -3))
     {
         return false;
     }
