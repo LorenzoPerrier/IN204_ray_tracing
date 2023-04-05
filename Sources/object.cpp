@@ -111,13 +111,29 @@ void camera::draw(scene scene, int reflection_level)
     /// Affichage des objets dans la console
     for (unsigned int i_object = 0; i_object < scene.getObjects().size(); i_object++)
     {
-        Vector3 v = scene.getObjects()[i_object]->getPosition();
-        std::cout << "Objet " << i_object << " x " << v.x << " y " << v.y << " z " << v.z << std::endl;
+        Vector3 pos = scene.getObjects()[i_object]->getPosition();
+        Vector3 col = scene.getObjects()[i_object]->getColor();
+        Vector3 rot = scene.getObjects()[i_object]->getRotation();
+        double refl = scene.getObjects()[i_object]->getReflection();
+        std::cout << "\033[31mObjet\033[0m " << i_object << ": " << typeid(scene.getObjects()[i_object]).name() << " pos : ";
+        pos.printVector();
+        std::cout << "rot : ";
+        rot.printVector();
+        std::cout << "col : ";
+        col.printVector();
+        std::cout << "refl : " << refl << std::endl;
     }
     for (unsigned int i_light = 0; i_light < scene.getLights().size(); i_light++)
     {
-        Vector3 v = scene.getLights()[i_light].getPosition();
-        std::cout << "Light " << i_light << " x " << v.x << " y " << v.y << " z " << v.z << std::endl;
+        Vector3 pos = scene.getLights()[i_light].getPosition();
+        Vector3 col = scene.getLights()[i_light].getColor();
+        double intensity = scene.getLights()[i_light].getIntensity();
+
+        std::cout << "\033[34mLight\033[0m " << i_light << ": " << typeid(scene.getLights()[i_light]).name() << " pos : ";
+        pos.printVector();
+        std::cout << "col : ";
+        col.printVector();
+        std::cout << "intensity : " << intensity << std::endl;
     }
     // Création de l'image
     cimg_library::CImg<double> img(m_width, m_height, 1, 3);
