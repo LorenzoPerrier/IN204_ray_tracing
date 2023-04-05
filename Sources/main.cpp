@@ -94,6 +94,9 @@ int main(int argc, char *argv[])
             Vector3 position(objectNode.attribute("pos_x").as_double(),
                              objectNode.attribute("pos_y").as_double(),
                              objectNode.attribute("pos_z").as_double());
+            Vector3 rotation(objectNode.attribute("rot_x").as_double(),
+                             objectNode.attribute("rot_y").as_double(),
+                             objectNode.attribute("rot_z").as_double());
             double edge = objectNode.attribute("edge").as_double();
             double reflection = objectNode.attribute("reflection").as_double();
             Vector3 color(objectNode.attribute("color_r").as_double(),
@@ -101,6 +104,7 @@ int main(int argc, char *argv[])
                           objectNode.attribute("color_b").as_double());
 
             cube *newCube = new cube(position, color, edge);
+            newCube->setRotation(rotation);
             newCube->setReflection(reflection);
             myScene.addObject(newCube);
         }

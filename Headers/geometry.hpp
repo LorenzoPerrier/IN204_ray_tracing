@@ -82,4 +82,15 @@ struct Ray
     Vector3 direction;
 };
 
+struct Matrix
+{
+    Vector3 row1;
+    Vector3 row2;
+    Vector3 row3;
+
+    Vector3 operator*(const Vector3 &vect) const
+    {
+        return Vector3(row1.dot(vect), row2.dot(vect), row3.dot(vect));
+    }
+};
 #endif

@@ -11,8 +11,8 @@ class object
 {
 private:
     Vector3 m_position;
-    Vector3 m_rotation; // not taken in account for the moment
-    Vector3 m_color;    // créer une classe Material
+    Vector3 m_rotation = Vector3(0., 0., 0.); // Vector indicating rotation allong x , y , z vectors // used for cube and plane only
+    Vector3 m_color;                          // créer une classe Material
     double m_reflection;
 
 public:
@@ -27,7 +27,7 @@ public:
 
     void setColor(const double &r, const double &g, const double &b);
     void setPosition(const double &x, const double &y, const double &z);
-    void setRotation(const double &x, const double &y, const double &z);
+    void setRotation(const Vector3 rot);
     double getReflection() const;
     void setReflection(double const value);
 
@@ -37,6 +37,7 @@ public:
         return false;
     };
     virtual Vector3 getSurfaceNormal(Vector3 surfacePoint) { return Vector3(0, 0, 0); };
+    virtual void createObject() { return; };
 };
 
 class camera : public object
@@ -191,6 +192,7 @@ class cube : public object
 {
 private:
     double m_edge; // accessible variable
+
     std::vector<plan> m_planes;
 
     bool isInsideSquare(Vector3 point, plan plane, double edge);
@@ -198,15 +200,81 @@ private:
 public:
     double getEdge() const;
     void setEdge(const double &r);
-    void createFaces(const double edge);
 
+    void createObject() override
+    {
+
+        // Rotation matrix
+        Matrix R_x;
+        Matrix R_y;
+        Matrix R_z;
+
+        double x_angle = this->getRotation().x;
+        R_x.row1 = Vector3(1, 0, 0);
+        R_x.row2 = Vector3(0, cos(x_angle), -sin(x_angle));
+        R_x.row3 = Vector3(0, sin(x_angle), cos(x_angle));
+
+        double y_angle = this->getRotation().y;
+        R_y.row1 = Vector3(cos(y_angle), 0, sin(y_angle));
+        R_y.row2 = Vector3(0, 1, 0);
+        R_y.row3 = Vector3(-sin(y_angle), 0, cos(y_angle));
+
+        double z_angle = this->getRotation().z;
+        R_z.row1 = Vector3(cos(z_angle), -sin(z_angle), 0);
+        R_z.row2 = Vector3(sin(z_angle), cos(z_angle), 0);
+        R_z.row3 = Vector3(0, 0, 1);
+
+        m_planes.clear();
+        Vector3 up(0, 0, 1);
+        Vector3 down(0, 0, -1);
+        Vector3 left(-1, 0, 0);
+        Vector3 right(1, 0, 0);
+        Vector3 forward(0, -1, 0);
+        Vector3 backward(0, 1, 0);
+
+        // Apply rotation
+
+        up = R_x * (R_y * (R_z * up));
+        down = R_x * (R_y * (R_z * down));
+        left = R_x * (R_y * (R_z * left));
+        right = R_x * (R_y * (R_z * right));
+        forward = R_x * (R_y * (R_z * forward));
+        backward = R_x * (R_y * (R_z * backward));
+
+        up.normalize();
+        down.normalize();
+        left.normalize();
+        right.normalize();
+        forward.normalize();
+        backward.normalize();
+
+        // printf("up :\n");
+        // up.printVector();
+        // printf("down :\n");
+        // down.printVector();
+        // printf("left :\n");
+        // left.printVector();
+        // printf("right :\n");
+        // right.printVector();
+        // printf("forward :\n");
+        // forward.printVector();
+        // printf("backward :\n");
+        // backward.printVector();
+
+        m_planes.push_back(plan(up, this->getPosition() + up * m_edge * 0.5, this->getColor()));
+        m_planes.push_back(plan(down, this->getPosition() + down * m_edge * 0.5, this->getColor()));
+        m_planes.push_back(plan(left, this->getPosition() + left * m_edge * 0.5, this->getColor()));
+        m_planes.push_back(plan(right, this->getPosition() + right * m_edge * 0.5, this->getColor()));
+        m_planes.push_back(plan(forward, this->getPosition() + forward * m_edge * 0.5, this->getColor()));
+        m_planes.push_back(plan(backward, this->getPosition() + backward * m_edge * 0.5, this->getColor()));
+    }
     cube() : object() {}
     cube(const double &x, const double &y, const double &z) : object(x, y, z) {}
-    cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) { createFaces(e); }
+    cube(const double &x, const double &y, const double &z, const double &e) : m_edge(e), object(x, y, z) { createObject(); }
     cube(Vector3 pos, double e) : object(pos), m_edge(e) {}
     cube(Vector3 pos, Vector3 col, double e) : object(pos, col), m_edge(e)
     {
-        createFaces(e);
+        createObject();
     }
 
     bool intersect(Ray ray, Vector3 *intersectionPoint) override

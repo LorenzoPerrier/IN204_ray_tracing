@@ -29,9 +29,10 @@ void object::setPosition(const double &x, const double &y, const double &z)
     m_position = {x, y, z};
 }
 
-void object::setRotation(const double &x, const double &y, const double &z)
+void object::setRotation(const Vector3 rot)
 {
-    m_rotation = {x, y, z};
+    m_rotation = rot;
+    createObject();
 }
 double object::getReflection() const
 {
@@ -199,7 +200,6 @@ void camera::draw(scene scene, int reflection_level)
 
                             if (surfaceNormal.dot(lightRay.direction) > 0)
                             {
-                                //   std::cout<<"Biiiiim"<<std::endl;
                                 lightRay.direction.normalize();
                                 surfaceNormal.normalize();
 
@@ -211,7 +211,6 @@ void camera::draw(scene scene, int reflection_level)
                     // on itére sur la prochaine reflexion
                     Vector3 surfaceNormal = scene.getObjects()[objectID]->getSurfaceNormal(objectHitPoint);
                     surfaceNormal.normalize();
-                    cameraRay.direction.normalize();
                     coef *= scene.getObjects()[objectID]->getReflection();
                     double reflet = 2. * (cameraRay.direction.dot(surfaceNormal));
                     cameraRay.origin = objectHitPoint;
@@ -293,29 +292,6 @@ void cube::setEdge(const double &e)
     m_edge = e;
 }
 
-void cube::createFaces(const double edge)
-{
-    m_planes.clear();
-    Vector3 up(0, 0, 1);
-    Vector3 down(0, 0, -1);
-    Vector3 left(-1, 1, 0);
-    Vector3 right(1, 1, 0);
-    Vector3 forward(1, -1, 0);
-    Vector3 backward(-1, -1, 0);
-
-    left.normalize();
-    right.normalize();
-    forward.normalize();
-    backward.normalize();
-
-    m_planes.push_back(plan(up, this->getPosition() + up * edge * 0.5, this->getColor()));
-    m_planes.push_back(plan(down, this->getPosition() + down * edge * 0.5, this->getColor()));
-    m_planes.push_back(plan(left, this->getPosition() + left * edge * 0.5, this->getColor()));
-    m_planes.push_back(plan(right, this->getPosition() + right * edge * 0.5, this->getColor()));
-    m_planes.push_back(plan(forward, this->getPosition() + forward * edge * 0.5, this->getColor()));
-    m_planes.push_back(plan(backward, this->getPosition() + backward * edge * 0.5, this->getColor()));
-}
-
 bool cube::isInsideSquare(Vector3 point, plan plane, double edge)
 {
 
@@ -323,7 +299,16 @@ bool cube::isInsideSquare(Vector3 point, plan plane, double edge)
     Vector3 normal = plane.getNormal();
 
     // Generator vectors of face
-    Vector3 up(0, 0, 1);
+    Vector3 up;
+    for (int k = 0; k < 6; k++)
+    {
+        if (fabs(m_planes[k].getNormal().dot(normal)) < pow(10, -6))
+        {
+            up = m_planes[k].getNormal();
+            break;
+        }
+    }
+
     Vector3 orth = normal.cross(up);
 
     Vector3 topLeftCorner = center + up * edge * 0.5 + orth * edge * 0.5;
