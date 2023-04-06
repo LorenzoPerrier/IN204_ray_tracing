@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     // Vérifier que le fichier XML est fourni en argument
     if (argc < 3)
     {
-        std::cerr << "Usage: " << argv[0] << " (optional)outputfilename.bmp"
+        std::cerr << "Usage: " << argv[0] << " outputfilename.bmp"
                   << " scene.xml"
                   << " (optional)object.stl"
                   << std::endl;
