@@ -3,6 +3,7 @@
 #include "../Headers/object.hpp"
 #include "../Headers/scene.hpp"
 #include <cstdio>
+#include <chrono>
 
 #include "../Headers/CImg.h"
 
@@ -134,7 +135,12 @@ int main(int argc, char *argv[])
         myScene.addLight(l);
     }
     std::cout << "Scene created : " << std::endl;
-    cam.draw(myScene, reflection_level);
 
+    auto start = chrono::high_resolution_clock::now();
+    cam.draw(myScene, reflection_level);
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+
+    std::cout << "Time taken for drawing the scene : " << duration.count() / 1000. << "sec" << std::endl;
     return 0;
 }

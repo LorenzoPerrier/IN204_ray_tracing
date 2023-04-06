@@ -342,7 +342,7 @@ bool cube::isInsideSquare(Vector3 point, plan plane, double edge)
     Vector3 R3 = CD.cross(point - botRightCorner);
     Vector3 R4 = DA.cross(point - botLeftCorner);
 
-    if (fabs(R1.norm() + R2.norm() + R3.norm() + R4.norm() - (R1 + R2 + R3 + R4).norm()) > pow(10, -3))
+    if (fabs(R1.norm() + R2.norm() + R3.norm() + R4.norm() - (R1 + R2 + R3 + R4).norm()) > pow(10, -6))
     {
         return false;
     }
