@@ -71,7 +71,7 @@ public:
     int getReflectionLevel() const;
     void setReflectionLevel(const int reflection_level);
 
-    void draw(scene scene, int reflection_level, const char* filename);
+    void draw(scene scene, int reflection_level, const char *filename);
 };
 
 class light : public object
@@ -105,42 +105,42 @@ public:
     bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
 
-        // Vector3 oc = this->getPosition() - ray.origin;
-        // double t = oc.dot(ray.direction);
-        // Vector3 p = ray.origin + t * ray.direction;
+        Vector3 oc = this->getPosition() - ray.origin;
+        double t = oc.dot(ray.direction);
+        Vector3 p = ray.origin + t * ray.direction;
 
-        // if ((p - this->getPosition()).norm() <= m_radius)
-        // {
+        if ((p - this->getPosition()).norm() <= m_radius)
+        {
 
-        //     double length = (this->getPosition() - p).norm();
-        //     double x = sqrt(pow(m_radius, 2) - pow(length, 2));
-        //     double t1 = t - x;
-        //     *intersectionPoint = ray.origin + t1 * ray.direction;
-        //     return true;
-        // }
-        // else
+            double length = (this->getPosition() - p).norm();
+            double x = sqrt(pow(m_radius, 2) - pow(length, 2));
+            double t1 = t - x;
+            *intersectionPoint = ray.origin + t1 * ray.direction;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        /// Hard shadows :
+
+        // Vector3 oc = ray.origin - this->getPosition();
+        // double a = ray.direction.norm() * ray.direction.norm();
+        // double b = 2. * oc.dot(ray.direction);
+        // double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
+        // double discriminant = b * b - 4. * a * c;
+        // if (discriminant < 0)
         // {
         //     return false;
         // }
-        /// Hard shadows :
+        // double t = (-b - sqrt(discriminant)) / (2. * a);
+        // if (t < 0)
+        // {
+        //     return false;
+        // }
 
-        Vector3 oc = ray.origin - this->getPosition();
-        double a = ray.direction.norm() * ray.direction.norm();
-        double b = 2. * oc.dot(ray.direction);
-        double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
-        double discriminant = b * b - 4. * a * c;
-        if (discriminant < 0)
-        {
-            return false;
-        }
-        double t = (-b - sqrt(discriminant)) / (2. * a);
-        if (t < 0)
-        {
-            return false;
-        }
-
-        *intersectionPoint = ray.origin + t * ray.direction;
-        return true;
+        // *intersectionPoint = ray.origin + t * ray.direction;
+        // return true;
     }
 
     Vector3 getSurfaceNormal(Vector3 surfacePoint) override

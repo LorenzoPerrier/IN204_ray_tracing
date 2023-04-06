@@ -134,8 +134,8 @@ int main(int argc, char *argv[])
                       lightNode.attribute("color_g").as_double(),
                       lightNode.attribute("color_b").as_double());
         double intensity(lightNode.attribute("intensity").as_double());
-        light l(position, color);
-        l.setIntensity(intensity);
+        light *l = new light(position, color);
+        l->setIntensity(intensity);
         myScene.addLight(l);
     }
 

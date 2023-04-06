@@ -125,9 +125,9 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
     }
     for (unsigned int i_light = 0; i_light < scene.getLights().size(); i_light++)
     {
-        Vector3 pos = scene.getLights()[i_light].getPosition();
-        Vector3 col = scene.getLights()[i_light].getColor();
-        double intensity = scene.getLights()[i_light].getIntensity();
+        Vector3 pos = scene.getLights()[i_light]->getPosition();
+        Vector3 col = scene.getLights()[i_light]->getColor();
+        double intensity = scene.getLights()[i_light]->getIntensity();
 
         std::cout << "\033[34mLight\033[0m " << i_light << ": " << typeid(scene.getLights()[i_light]).name() << " pos : ";
         pos.printVector();
@@ -190,7 +190,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                         bool isDirect = true;
                         Ray lightRay;
                         lightRay.origin = objectHitPoint;
-                        lightRay.direction = scene.getLights()[i_light].getPosition() - objectHitPoint;
+                        lightRay.direction = scene.getLights()[i_light]->getPosition() - objectHitPoint;
                         Vector3 intersectionLightPoint;
 
                         for (unsigned int i_object = 0; i_object < scene.getObjects().size(); i_object++)
@@ -200,7 +200,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                             {
                                 if (scene.getObjects()[i_object]->intersect(lightRay, &intersectionLightPoint))
                                 {
-                                    if (((intersectionLightPoint - scene.getLights()[i_light].getPosition()).norm() < lightRay.direction.norm()) & ((intersectionLightPoint - scene.getLights()[i_light].getPosition()).dot(lightRay.direction) < 0))
+                                    if (((intersectionLightPoint - scene.getLights()[i_light]->getPosition()).norm() < lightRay.direction.norm()) & ((intersectionLightPoint - scene.getLights()[i_light]->getPosition()).dot(lightRay.direction) < 0))
                                     {
                                         isDirect = false;
                                         break;
@@ -219,7 +219,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                                 lightRay.direction.normalize();
                                 surfaceNormal.normalize();
 
-                                color = color + coef * scene.getLights()[i_light].getColor() * scene.getObjects()[objectID]->getColor() * scene.getLights()[i_light].getIntensity() * surfaceNormal.dot(lightRay.direction);
+                                color = color + coef * scene.getLights()[i_light]->getColor() * scene.getObjects()[objectID]->getColor() * scene.getLights()[i_light]->getIntensity() * surfaceNormal.dot(lightRay.direction);
                             }
                         }
                     }
