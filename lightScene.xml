@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<scene>
+  <camera pos_x="0." pos_y="-3." pos_z="0." dir_x="0." dir_y="1." dir_z="0." orth_x="1." orth_y="0." orth_z="0." width="960" height="720" resolution="0.0035" screen_distance="1" reflection_level = "1"/>
+
+  <objects>
+
+  </objects>
+
+  <lights>
+    <pointLight pos_x="0" pos_y="-3" pos_z="0." color_r="1." color_g="1." color_b="1." intensity = "1"/>
+  </lights>
+</scene>

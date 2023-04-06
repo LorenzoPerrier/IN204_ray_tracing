@@ -105,7 +105,7 @@ void camera::setReflectionLevel(const int reflection_level)
     m_reflection_level = reflection_level;
 }
 
-void camera::draw(scene scene, int reflection_level)
+void camera::draw(scene scene, int reflection_level, const char *filename)
 {
 
     /// Affichage des objets dans la console
@@ -267,7 +267,7 @@ void camera::draw(scene scene, int reflection_level)
         }
     }
 
-    img.save("Img.bmp");
+    img.save(filename);
 }
 
 /// Light

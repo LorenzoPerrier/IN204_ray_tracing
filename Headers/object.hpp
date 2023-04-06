@@ -71,7 +71,7 @@ public:
     int getReflectionLevel() const;
     void setReflectionLevel(const int reflection_level);
 
-    void draw(scene scene, int reflection_level);
+    void draw(scene scene, int reflection_level, const char* filename);
 };
 
 class light : public object
@@ -105,42 +105,42 @@ public:
     bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
 
-        Vector3 oc = this->getPosition() - ray.origin;
-        double t = oc.dot(ray.direction);
-        Vector3 p = ray.origin + t * ray.direction;
+        // Vector3 oc = this->getPosition() - ray.origin;
+        // double t = oc.dot(ray.direction);
+        // Vector3 p = ray.origin + t * ray.direction;
 
-        if ((p - this->getPosition()).norm() <= m_radius)
-        {
+        // if ((p - this->getPosition()).norm() <= m_radius)
+        // {
 
-            double length = (this->getPosition() - p).norm();
-            double x = sqrt(pow(m_radius, 2) - pow(length, 2));
-            double t1 = t - x;
-            *intersectionPoint = ray.origin + t1 * ray.direction;
-            return true;
-        }
-        else
+        //     double length = (this->getPosition() - p).norm();
+        //     double x = sqrt(pow(m_radius, 2) - pow(length, 2));
+        //     double t1 = t - x;
+        //     *intersectionPoint = ray.origin + t1 * ray.direction;
+        //     return true;
+        // }
+        // else
+        // {
+        //     return false;
+        // }
+        /// Hard shadows :
+
+        Vector3 oc = ray.origin - this->getPosition();
+        double a = ray.direction.norm() * ray.direction.norm();
+        double b = 2. * oc.dot(ray.direction);
+        double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
+        double discriminant = b * b - 4. * a * c;
+        if (discriminant < 0)
         {
             return false;
         }
-        /// Hard shadows :
+        double t = (-b - sqrt(discriminant)) / (2. * a);
+        if (t < 0)
+        {
+            return false;
+        }
 
-        // Vector3 oc = ray.origin - this->getPosition();
-        // double a = ray.direction.norm() * ray.direction.norm();
-        // double b = 2. * oc.dot(ray.direction);
-        // double c = oc.norm() * oc.norm() - this->getRadius() * this->getRadius();
-        // double discriminant = b * b - 4. * a * c;
-        // if (discriminant < 0)
-        // {
-        //     return false;
-        // }
-        // double t = (-b - sqrt(discriminant)) / (2. * a);
-        // if (t < 0)
-        // {
-        //     return false;
-        // }
-
-        // *intersectionPoint = ray.origin + t * ray.direction;
-        // return true;
+        *intersectionPoint = ray.origin + t * ray.direction;
+        return true;
     }
 
     Vector3 getSurfaceNormal(Vector3 surfacePoint) override
@@ -347,4 +347,88 @@ public:
     }
 };
 
+class triangle : public object
+{
+
+private:
+    Vector3 m_sommet2;
+    Vector3 m_sommet3;
+    Vector3 m_edge_12;
+    Vector3 m_edge_23;
+    Vector3 m_edge_13;
+    Vector3 m_normal;
+
+public:
+    triangle(Vector3 sommet1, Vector3 sommet2, Vector3 sommet3, Vector3 normal, Vector3 col) : object(sommet1, col), m_sommet2(sommet2), m_sommet3(sommet3), m_edge_12(sommet2 - sommet1), m_edge_23(sommet3 - sommet2), m_edge_13(sommet3 - sommet1), m_normal(normal) {}
+    virtual bool intersect(Ray ray, Vector3 *intersectionPoint) override
+    {
+        const float EPSILON = 0.0000001f;
+        Vector3 n1 = ray.direction.cross(m_edge_13);
+        double det = m_edge_12.dot(n1);
+        if (std::abs(det) < EPSILON)
+        {
+            return false;
+        }
+        Vector3 n2 = ray.origin - this->getPosition();
+        double u = n2.dot(n1) / det;
+        if (u < 0.0f || u > 1.0f)
+        {
+            return false;
+        }
+        Vector3 n3 = n2.cross(m_edge_12);
+        double v = ray.direction.dot(n3) / det;
+        if (v < 0.0f || u + v > 1.0f)
+        {
+            return false;
+        }
+        double t = m_edge_13.dot(n3) / det;
+        if (t < 0)
+        {
+            return false;
+        }
+        *intersectionPoint = ray.origin + t * ray.direction;
+        /*bool rayTriangleIntersection(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t)
+        {   glm::vec3 v0v1 = v1 - v0;
+            glm::vec3 v0v2 = v2 - v0;
+            glm::vec3 pvec = glm::cross(rayDirection, v0v2);
+            float det = glm::dot(v0v1, pvec);    // Ray and triangle are parallel if det is close to 0
+            if (fabs(det) < EPSILON) {return false;}
+            float invDet = 1.0f / det;
+            glm::vec3 tvec = rayOrigin - v0;
+            float u = glm::dot(tvec, pvec) * invDet;    // The intersection lies outside of the triangle
+            if (u < 0.0f || u > 1.0f) {return false;    }
+            glm::vec3 qvec = glm::cross(tvec, v0v1);
+            float v = glm::dot(rayDirection, qvec) * invDet;    // The intersection lies outside of the triangle
+            if (v < 0.0f || u + v > 1.0f) {return false;}
+            t = glm::dot(v0v2, qvec) * invDet;   // The intersection lies behind the ray origin
+            if (t < 0.0f) {return false;}
+            return true;
+        }*/
+
+        return true;
+    };
+    Vector3 getSurfaceNormal(Vector3 const PointSurface) override
+    {
+        return m_normal;
+    };
+    Vector3 getSommet(int n) const
+    {
+        if (n == 1)
+        {
+            return this->getPosition();
+        }
+        else if (n == 2)
+        {
+            return m_sommet2;
+        }
+        else if (n == 3)
+        {
+            return m_sommet3;
+        }
+        else
+        {
+            return Vector3(0, 0, 0);
+        }
+    };
+};
 #endif

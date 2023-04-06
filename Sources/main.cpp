@@ -4,6 +4,7 @@
 #include "../Headers/scene.hpp"
 #include <cstdio>
 #include <chrono>
+#include <fstream>
 
 #include "../Headers/CImg.h"
 
@@ -12,15 +13,18 @@ using namespace std;
 int main(int argc, char *argv[])
 {
     // Vérifier que le fichier XML est fourni en argument
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cerr << "Usage: " << argv[0] << " scene.xml" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " (optional)outputfilename.bmp"
+                  << " scene.xml"
+                  << " (optional)object.stl"
+                  << std::endl;
         return 1;
     }
 
     // Charger le fichier XML
     pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(argv[1]);
+    pugi::xml_parse_result result = doc.load_file(argv[2]);
     if (!result)
     {
         std::cerr << "Erreur de chargement du fichier XML : " << result.description() << std::endl;
@@ -134,10 +138,69 @@ int main(int argc, char *argv[])
         l.setIntensity(intensity);
         myScene.addLight(l);
     }
+
+    // Charger le fichier objet STL
+
+    if (argc == 4)
+    {
+        std::ifstream file(argv[3], std::ios::in | std::ios::binary);
+        if (!file)
+        {
+            std::cout << "Pas de fichier stl à ce nom" << std::endl;
+        }
+        else
+        {
+
+            // en-tête du fichier STL
+            char header[80] = "";
+            char ntriangles[4];
+            file.read(header, 80);
+            file.read(ntriangles, 4);
+            int num_triangles = *(int *)ntriangles;
+
+            // Lecture de chaque triangle
+            for (int i = 0; i < num_triangles; i++)
+            {
+
+                float nx, ny, nz;
+                file.read((char *)&nx, sizeof(float));
+                file.read((char *)&ny, sizeof(float));
+                file.read((char *)&nz, sizeof(float));
+
+                float x1, y1, z1, x2, y2, z2, x3, y3, z3;
+                file.read((char *)&x1, sizeof(float));
+                file.read((char *)&y1, sizeof(float));
+                file.read((char *)&z1, sizeof(float));
+                file.read((char *)&x2, sizeof(float));
+                file.read((char *)&y2, sizeof(float));
+                file.read((char *)&z2, sizeof(float));
+                file.read((char *)&x3, sizeof(float));
+                file.read((char *)&y3, sizeof(float));
+                file.read((char *)&z3, sizeof(float));
+
+                triangle *newTriangle = new triangle(
+                    Vector3(x1, y1, z1),
+                    Vector3(x2, y2, z2),
+                    Vector3(x3, y3, z3),
+                    Vector3(nx, ny, nz),
+                    Vector3(0, 200, 0));
+
+                myScene.addObject(newTriangle);
+
+                // attribut du triangle (inutile)
+                char attribute[2];
+                file.read(attribute, 2);
+            }
+        }
+    }
+
     std::cout << "Scene created : " << std::endl;
 
+    // Draw Scene
+    const char *filename = argv[1];
+
     auto start = chrono::high_resolution_clock::now();
-    cam.draw(myScene, reflection_level);
+    cam.draw(myScene, reflection_level, filename);
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
 
