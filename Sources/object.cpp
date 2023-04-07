@@ -148,9 +148,9 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
     double coef = 1.;
     int level;
 // boucles pour balayer tous les pixels
-#pragma omp parallel for
+
     for (int i = 0; i < m_width; i++)
-    {
+    {   #pragma omp parallel for
         for (int j = 0; j < m_height; j++)
         {
             Vector3 color(0, 0, 0); // couleur de l'arrière plan par défaut
