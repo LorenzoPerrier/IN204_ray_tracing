@@ -22,6 +22,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    // Créer la scène
+    scene myScene;
+
     // Charger le fichier XML
     pugi::xml_document doc;
     pugi::xml_parse_result result = doc.load_file(argv[2]);
@@ -30,9 +33,6 @@ int main(int argc, char *argv[])
         std::cerr << "Erreur de chargement du fichier XML : " << result.description() << std::endl;
         return 1;
     }
-
-    // Créer la scène
-    scene myScene;
 
     // Récupérer les paramètres de la caméra
     pugi::xml_node cameraNode = doc.child("scene").child("camera");
