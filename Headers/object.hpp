@@ -104,7 +104,7 @@ public:
 
     bool intersect(Ray ray, Vector3 *intersectionPoint) override
     {
-
+        /// Intersect 1
         Vector3 oc = this->getPosition() - ray.origin;
         double t = oc.dot(ray.direction);
         Vector3 p = ray.origin + t * ray.direction;

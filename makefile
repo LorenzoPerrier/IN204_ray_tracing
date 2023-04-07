@@ -15,7 +15,7 @@ CXXFLAGS = -Wall -Wno-reorder
 
 # Commande de construction de l'exécutable
 $(EXEC): $(SOURCES) $(HEADERS)
-	$(CXX) $(CXXFLAGS) $(SOURCES) -lgdi32 -o $(EXEC)
+	$(CXX) $(CXXFLAGS) $(SOURCES) -lgdi32 -fopenmp -lpthread -o $(EXEC)
 
 .PHONY: clean
 clean:

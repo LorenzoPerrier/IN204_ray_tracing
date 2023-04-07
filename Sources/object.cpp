@@ -2,6 +2,7 @@
 #include "../Headers/scene.hpp"
 #include "../Headers/CImg.h"
 #include <algorithm>
+#include <omp.h>
 
 /// Object class
 Vector3 object::getPosition() const
@@ -146,15 +147,18 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
     Vector3 centerOfScreen = this->getPosition() + m_screen_distance * m_camera_direction;
     double coef = 1.;
     int level;
-
+// boucles pour balayer tous les pixels
+#pragma omp parallel for
     for (int i = 0; i < m_width; i++)
     {
         for (int j = 0; j < m_height; j++)
         {
-            Vector3 color(0, 0, 0);
-
+            Vector3 color(0, 0, 0); // couleur de l'arrière plan par défaut
+            // position du pixel sur l'écran
             Vector3 M = centerOfScreen + (-m_width / 2 + i) * m_resolution * m_camera_orth + (m_height / 2 - j) * m_resolution * camera_normal;
+            // rayon incident
             level = 0;
+            // coefficient de transmission
             coef = 1.;
             // Ray
             Ray cameraRay;
@@ -170,7 +174,8 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                 // Object hit id
                 objectID = -1;
                 double distanceHit = INFINITY;
-
+                // passer les objets en revu afin de voir si le rayon lumineux intersecte un objet
+                // garder l'id du plus proche
                 for (unsigned int i_object = 0; i_object < scene.getObjects().size(); i_object++)
                 {
 
@@ -184,23 +189,26 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                         }
                     }
                 }
+                // Si un objet a été rencontré
                 if (objectID != -1)
                 {
+                    // passer les lumières en revue et regarder si elles éclairent ou non l'objet
                     for (unsigned int i_light = 0; i_light < scene.getLights().size(); i_light++)
                     {
+                        // On a pas rencontré d'objet
                         bool isDirect = true;
                         Ray lightRay;
                         lightRay.origin = objectHitPoint;
                         lightRay.direction = scene.getLights()[i_light]->getPosition() - objectHitPoint;
                         Vector3 intersectionLightPoint;
-
+                        // passer les objets en revue et regarder s'ils sont sur le chemin de la lumière
                         for (unsigned int i_object = 0; i_object < scene.getObjects().size(); i_object++)
                         {
 
                             if ((int)i_object != objectID)
-                            {
+                            { // si on rencontre un objet
                                 if (scene.getObjects()[i_object]->intersect(lightRay, &intersectionLightPoint))
-                                {
+                                { // si celui-ci se trouve entre la source lumineuse et l'objet
                                     if (((intersectionLightPoint - scene.getLights()[i_light]->getPosition()).norm() < lightRay.direction.norm()) & ((intersectionLightPoint - scene.getLights()[i_light]->getPosition()).dot(lightRay.direction) < 0))
                                     {
                                         isDirect = false;
@@ -209,7 +217,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                                 }
                             }
                         }
-
+                        // si aucun objet ne bloque le rayon lumineux
                         if (isDirect)
                         {
 
@@ -219,7 +227,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                             {
                                 lightRay.direction.normalize();
                                 surfaceNormal.normalize();
-
+                                // On prend en compte l'impact de cette source lumineuse
                                 color = color + coef * scene.getLights()[i_light]->getColor() * scene.getObjects()[objectID]->getColor() * scene.getLights()[i_light]->getIntensity() * surfaceNormal.dot(lightRay.direction);
                             }
                         }
@@ -228,6 +236,7 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                     // on itére sur la prochaine reflexion
                     Vector3 surfaceNormal = scene.getObjects()[objectID]->getSurfaceNormal(objectHitPoint);
                     surfaceNormal.normalize();
+                    // on prend en compte la diminution de la réflexion
                     coef *= scene.getObjects()[objectID]->getReflection();
                     double reflet = 2. * (cameraRay.direction.dot(surfaceNormal));
                     cameraRay.origin = objectHitPoint;
@@ -237,7 +246,13 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
                 }
 
             } while ((coef > 0.0f) && (level < reflection_level) && objectID != -1);
+            // si le rayon rencontre une surface non réflechissante : coef = 0 -> on s'arrête
+            // level indique le nombre de fois que le rayon a été réfléchi, on limite à reflection_lever -> on s'arrête
+            // Si le rayon ne touche aucun objet objectID=-1 -> on s'arrête
+
             char color3[3];
+            // Si les valeurs sont supérieures à 255, on sature à 255
+
             if (color.x > 255)
             {
                 color3[0] = 255;
