@@ -15,7 +15,7 @@ Fichier xml pouvant être compilé
 
 lightScene.xml
 pscene1.xml
-demo3.xml
+
 
 /////FICHIER XML////////
 
@@ -40,6 +40,7 @@ Afin de savoir quelle couleur va être attribué à ce pixel, on regarde comment
 	Si un ou plusieurs objets se trouvent sur la trajectoire du rayon lumineux, on n’éclaire pas l’objet.
 	Sinon on va utiliser la couleur de la source, l’angle d’incidence, la couleur de la sphère, afin de déterminer la couleur du pixel. 
 
+Le calcul de l'intersection entre un rayon et un objet est propre à chaque objet et a été implémenté dans la fonction Intersect. 
 
 Ce fonctionnement de base  a été amélioré en prenant en compte la réflexivité des objets, ainsi la boucle “while ((coef > 0.0f) && (level < 2)&&objectID!=-1);” permet de faire partir un rayon réfléchi à partir du point d’impact du rayon incident qui subira le même processus que le rayon incident : détection objet, puis détermination de la couleur.
 

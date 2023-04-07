@@ -146,11 +146,10 @@ void camera::draw(scene scene, int reflection_level, const char *filename)
     Vector3 centerOfScreen = this->getPosition() + m_screen_distance * m_camera_direction;
     double coef = 1.;
     int level;
-    // boucles pour balayer tous les pixels
-
+// boucles pour balayer tous les pixels
+#pragma omp parallel for
     for (int i = 0; i < m_width; i++)
     {
-
         for (int j = 0; j < m_height; j++)
         {
             Vector3 color(0, 0, 0); // couleur de l'arrière plan par défaut
